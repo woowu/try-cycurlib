@@ -1,0 +1,391 @@
+=== Version 3.5.3 =============================================================
+
+- Bugfix:
+    Fixed inconsistent data types for the nonce of the AES-EAX mode. The streaming
+    interface (update function) used an UINT32 whereas the one-shot functions
+    (encrypt/decrypt) used an UINT8.
+
+=== Version 3.5.2 =============================================================
+
+- Bugfix:
+    Fixed a bug in the unwrap function of AES key wrapping: The authenticity check
+    was skipped due to the bug. Therefore, the function returned no error if
+    the cipher text was modified.
+
+=== Version 3.5.1 =============================================================
+
+- Bugfix:
+    Fixed a bug in RSA key generation: The generated key is incorrect with a
+    probability of approximately 1.37%. Despite the invalid key, the key generation
+    function returns no error.
+
+=== Version 3.5 ===============================================================
+
+- Added new algorithms:
+    * AES-EAX mode
+    * Key wrapping for AES
+    * KDF according to NIST SP800-56A
+    * Miyaguchi-Preneel compression and key derivation according to SHE
+
+- Improvements:
+    * Faster ECC core operations
+    * New fixed-base implementation to speed up ECDSA signature generation
+    * Variable length of plaintext in ECIES implementation
+    * Start() function for CMAC to avoid re-computation of schedule
+
+- Removed legacy algorithms:
+    * MD2
+    * MD5
+    * DES
+    * ARC4
+
+=== Version 3.4 ===============================================================
+
+- Extended implementation of EdDSA to support variants in RFC 8032,
+  i.e. pre-hashed EdDSA and the usage of a context.
+
+- Changed X.509 parser to accept certificates with unknown attributes inside the
+  distinguished names (i.e. subject/issuer). Multiple attributes of the same
+  type are allowed as well. However, information about these attributes cannot
+  be queried via the parser's API. New getter functions were added to support
+  comparing an issuer with a subject.
+
+- Removed EscDer_NextIntegerLongLe() function in the DER parser.
+- Removed support for querying a second OU attribute in the X.509 parser.
+  
+=== Version 3.3 ===============================================================
+
+- Added new algorithms:
+    * Poly1305 one-time authenticator
+    * ChaCha20_Poly1305 Authenticated Encryption with Associated Data (AEAD)
+    * HMAC-SHA2-384, HMAC-SHA2-512
+
+- Improved X.509/DER parser:
+    * Support for two Organizational Unit (OU) attributes
+    * Support for RDN attributes encoded as TeletexString, UniversalString, BMPString
+
+=== Version 3.2 ===============================================================
+
+- Added new algorithms:
+    * SHA-3 hash function with digest sizes 224, 256, 384 and 512 bits
+    * Ed25519 signature generation and verification with SHA2-512
+    * ChaCha20 symmetric cipher
+
+- Improved X.509 parser:
+    * Added support for certificates signed with RSASSA-PSS.
+    * Added support for the basicConstaints and keyUsage extensions.
+      Certificates containing critical unknown/unsupported extensions are rejected.
+    * Both RSA and ECDSA signatures are supported simultaneously at runtime now.
+      Similarly, both RSA and ECC public keys are supported simultaneously at runtime now.
+    * Parsing hybrid certificates is possible now (e.g. if the certificate contains an
+      ECC public key, but is signed with RSA).
+    * Support for all SHA-1 and SHA-2 hash functions.
+    * Support for X509v1 and X509v2. Previously, only X509v3 was supported.
+
+- Removed support for elliptic curve secp160r1
+
+=== Version 3.1 ===============================================================
+
+- Added time-sliced implementations of ECC/RSA operations
+
+=== Version 3.0 ===============================================================
+
+- AES:
+    * Support for multiple key sizes at runtime. The maximum size can be configured at compile-time.
+    * Moved decryption code to separate C file.
+    * Changed ECB mode to support multiple blocks in a single call.
+    * Improved speed of GCM implementation (variant without lookup tables).
+    * Less restrictive implementation for AES-CTR (allow in-place processing and lengths which are not
+      a multiple of the AES block size)
+    * Support chunk-wise update of additional authenticated data in GCM
+    * Separated key schedule computation from remaining data dependent initialization in AES-CCM
+      (no need to re-compute key schedule any more if a new message is processed using the same key)
+
+- RSA / PKCS#1:
+    * Support for multiple key sizes at runtime. The maximum size can be configured at compile-time.
+    * Use variable salt length in PKCS1-RSASSA-PSS.
+    * Support for multiple hash algorithms at runtime in PKCS1-RSASSA-PSS.
+    * Refactoring of key structures to be able to use generated keys directly.
+    * Improved speed of CRT and key generation.
+
+- ECC:
+    * Support multiple elliptic curves at runtime. Support for each curve can be enabled or disabled at compile-time.
+    * Added key pair generation (previous versions could only drive public keys from private keys)
+
+- Support for truncation of digests / MACs    
+- Switched to MISRA-C:2012
+- Added header dependency generation to the Makefile
+
+=== Version 2.11 ==============================================================
+
+- Added Diffie-Hellman key exchange
+- Removed HIS security module implementation
+- Removed random wrapper (random.c)
+    - All functions which require a PRNG now expect a corresponding function pointer instead
+    - A wrapper to use the Hash_DRBG was added to the hash_drbg module
+
+=== Version 2.10 ==============================================================
+
+- Added Blowfish block cipher
+- Faster multiplication for AES-GCM
+- Added functions to change the IV for the CBC mode without executing the key schedule again
+- Use integral return code ("Esc_ERROR") for all functions (instead of BOOL)
+- Changed RSA-PSS interface to pass hash of message instead of passing the message itself
+- SHA-224 and SHA-256 can now be both used at runtime (no selection at compile-time any more)
+- SHA-384 and SHA-512 can now be both used at runtime (no selection at compile-time any more)
+- Prefix all primitive data types with "Esc_" to avoid clashes with existing definitions
+
+=== Version 2.9 ===============================================================
+
+- PKCS#1
+    - Added v1.5 signature generation
+    - Added v1.5 encryption/decryption
+    - PSS padding can now be configured for any SHA hash
+    - OAEP padding can be now be configured for any SHA hash
+
+- AES
+    - Faster table-based implementation
+
+- CRC32
+    - Faster table-based implementation
+
+- RSA
+    - Support for key sizes of 3072 bits and 4096 bits
+    - Added key generation
+    - Faster decryption using CRT
+
+- 3DES
+    - Support for OMAC1 (aka CMAC) with 3DES
+
+- ARC4
+    - Support for RC4-drop[n]
+    
+=== Version 2.8.1 =============================================================
+
+- Bugfix in the ARC4 module
+
+=== Version 2.8 ===============================================================
+
+- Unified watchdog usage for ECC and RSA
+
+- Changed NDEBUG to Esc_NDEBUG and assert() to Esc_ASSERT()
+
+- Renamed config.h to cycurlib_config.h
+
+- Added ECIES according to IEEE Std 1363a
+
+- ECC
+  - Added secp384r1, secp521r1 and all brainpoolpr1 curves	
+
+- AES
+  - Added XTS mode  
+  
+=== Version 2.7.2 =============================================================
+
+- Fixed wrong return types in HMAC-SHA functions
+
+=== Version 2.7.1 =============================================================
+
+- Fixed bug in X509 with ECC
+
+=== Version 2.7 ===============================================================
+
+- Added HASH_DRBG according to NIST SP800-90
+
+- RSA
+  - Removed little endian support (EscRsa_LITTLE_ENDIAN)
+  - Perfomance improvement for short exponent 3
+  - Reduced RAM usage
+  
+- AES
+  - Added AES-CCM
+  
+- ECC
+  - Shamir's trick
+  
+- PKCS-PSS
+  - Verify
+  
+  
+=== Version 2.6.1 =============================================================
+
+- X509
+  - Fixed Bug
+
+=== Version 2.6 ===============================================================
+
+- renamed cryptolib.h into config.h
+- Added MD2 module
+- Added MD5 module
+- Added ARC4 module
+- Added Whirlpool module
+- Added DES and 3-DES modules (supporting the modes ECB and CBC)
+- Module dependencies are now reflected by header file inclusions 
+  in the header files. (e.g. x depends on y => x.h includes y.h)
+
+- AES
+  - Split up module in multiple submodules (ECB, CBC, CBC-MAC, CTR and OMAC).
+  
+- DER
+  - Changed all CHAR to UINT8 
+
+- SHA-2
+  - Renamed sha_3.c in sha_2_64.c
+
+- X509
+  - Changed all CHAR to UINT8 
+  - Added X.509-RSA-SHA2 support (SHA-224 and SHA-256)
+
+=== Version 2.5 ===============================================================
+
+- Updated Handbook
+- Changed define HAS_INT64 to Esc_HAS_INT64
+- Changed define HAS_WATCHDOG to Esc_HAS_WATCHDOG
+- All configuration defines are now guarded, so they
+  can be set by command line
+
+- WATCHDOG
+  - Added dummy watchdog implementation
+  - Added support for statically compiled watchdog
+  - Added watchdog hosttest 
+
+- ECC 
+  - Added Watchdog support
+
+- AES
+  - FIX: AES OMAC doesn't compile in rare cases
+
+- AES_GCM
+  - added new modules aes_gcm.c/h and test_aes_gcm.c/h
+
+- SHA-1
+  - added updateHashFast, optimized update function
+
+- SHA-2
+  - added updateHashFast, optimized update function
+
+- SHA-3
+  - added updateHashFast, optimized update function
+
+
+=== Version 2.4.1 =============================================================
+
+- X509
+  - Bugfix for non-selfsigned certificates
+
+- DER
+  - Support for UTF8 Strings
+
+- ECC
+  - added NIST-reduction for 224bit
+  - added selftest for 224bit
+
+=== Version 2.4 ===============================================================
+
+- ECC
+  - added selftest for compute shared secret
+
+- RSA
+  - removed normalization -> 5 functions
+  - removed classical multiply, now always comba
+  - Multiply and Square-function for UINT64 and no UINT64 combined
+  - optimized array size in sliding window
+  - MISRA-C:2004 Compliance (Various changes)
+  - Fixed Montgomery Bug
+
+- PKCS1
+  - Module PKCS1 is now deprecated. It is replaced by module PKCS1_V15.
+
+- PKCS1_V15
+  - Added PKCS1-v1.5 with hash values MD2, MD5, SHA-1, 
+  SHA224, SHA256, SHA384, SHA512
+
+- PKCS1_OAEP
+  - Dependency from PKCS1 removed  
+
+- PKCS1_PSS
+  - Dependency from PKCS1 removed  
+
+- RSA
+  - Multiply and Square-function for UINT64 and no UINT64 combined
+  - optimized array size in sliding window
+  - MISRA-C:2004 Compliance (Various changes)
+  - Fixed Montgomery Bug
+
+- SecM
+ - SecM_verifySignature uses PKCS_V15 instead of RSA and SHA-1
+
+- X509
+  - Uses PKCS1_V15 module instead of PKCS1 module
+  - Support for X509 certificates using SHA2 with ECDSA
+  - Splitted x509 module into two seperate modules
+ 
+=== Version 2.3 ===============================================================
+
+- RSA
+  - Added Montgomery Multiplication for RSA
+
+- HMAC-SHA2
+  - Added HMac_Sha_2 (224 + 256 bit)
+  - Added Selftest for Hmac_Sha_2 (224 + 256bit)
+  - replaced hardcoded output length in hmac_sha_1.c with define from sha_1.h
+
+- ECC
+  - Modified multiplication for 160bit
+  - Added binary EGCD for inversion
+
+- Add selftest test_types.[ch], to check correct type definition in cryptolib.h
+
+=== Version 2.2 ===============================================================
+
+- RSA
+  - Added Sliding Window and Comba-Algorithm for multiplication and squaring
+
+- ECC
+  - MISRA Bugfix, added EscEccFe_MultiplyShort for performance, removed sign
+  - ECC224 and ECC256 added
+
+- SecM
+  - Guarded unimplemented functions with define Esc_DUMMY_IMPLEMENTATION
+
+- random
+  - Guarded unimplemented functions with define Esc_DUMMY_IMPLEMENTATION
+
+- hmac_ripemd_160
+  - Fix: BOOL functions did return not only FALSE and TRUE, but also 
+        (TRUE+TRUE) in rare cases.
+
+=== Version 2.1 ===============================================================
+
+- AES 
+  - ECB, CTR, CBC-MAC and OMAC1 mode
+  - Can be processed blockwise
+
+- DER
+  - PrintableString, AnyString, UTCTime, GeneralizedTime and Set added
+
+- ECC
+  - Changed curve parameter structure to reduce memory usage
+
+- PKCS-OAEP
+  - Encryption and decryption
+
+- PKCS-PSS
+  - Sign
+
+- RSA
+  - Decryption/sign (exponentiation with big exponents)
+  - Support for big endian input and output
+
+- SHA
+  - SHA-224, SHA-256, SHA-384 and SHA-512 added
+
+- x.509
+  - Added info fields subject, issuer, not before, not after
+
+- cryptolib.h
+  - Replaced _lint define with NDEBUG
+
+=== Version 2.0 ===============================================================
+
+- Changelog Start
