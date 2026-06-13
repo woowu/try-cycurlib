@@ -1,2 +1,6 @@
 *~
 *.o
+*.d
+*.swp
+tags
+aes-gcm-stream-codec

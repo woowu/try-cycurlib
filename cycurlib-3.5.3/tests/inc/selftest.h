@@ -51,7 +51,7 @@ using printf of stdio.h.
 Edit ESCLIB_PRINTF macro in /tests/src/selftest.c to adjust to your own implementation
 if your platform does not support stdio.h.
 */
-#   define EscTst_ENABLE_LOGGING 0
+#   define EscTst_ENABLE_LOGGING 1
 #endif
 
 /***************************************************************************
