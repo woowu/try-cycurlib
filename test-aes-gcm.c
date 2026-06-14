@@ -39,6 +39,10 @@ static const uint8_t A[] = {
 static uint8_t cipher[sizeof(test_data)];
 static uint8_t T[12];
 static uint8_t decrypted[sizeof(test_data)];
+
+static message_t encrypted_msg;
+static message_t decrypted_msg;
+
 static unsigned char hexstr[sizeof(cipher)*4];
 
 static int one_shot_encrypt()
@@ -122,8 +126,6 @@ static int stream_encrypt()
         offs += len;
     }
     if (!err)
-        err = EscAesGcm_Encrypt_Update(&ctx, Esc_NULL_PTR, Esc_NULL_PTR, 0U);
-    if (!err)
         err = EscAesGcm_Encrypt_Finish(&ctx, stream_T, sizeof(stream_T));
     if (err) {
         fprintf(stderr, "Stream encryption failed: %d\n", err);
@@ -199,51 +201,76 @@ static void print_message(const message_t *message)
     fprintf(stdout, "%s\n", hexstr);
 }
 
-static int test_stream_crypt()
+static int test_stream_crypt_enc()
 {
     aes_gcm_stream_crypt_t crypt; 
-    message_t message;
     int err;
-    uint8_t chunk_buf[16];
     uint8_t tag_buf[12];
 
-    err = aes_gcm_cryt_init(&crypt
+    err = aes_gcm_crypt_init(&crypt
             , key, sizeof(key));
-    if (!err) {
-        message.len = aes_gcm_init_message(message.buf, iv, sizeof(iv));
-        err = aes_gcm_cryt_enc_data(&crypt, iv, sizeof(iv)
-                , A, sizeof(A)
-                , chunk_buf, sizeof(chunk_buf)
-                , tag_buf, sizeof(tag_buf)
-                , test_data, sizeof(test_data)
-                , wr_message, &message);
-        if (err) {
-            fprintf(stderr, "write message error: %d\n", err);
-            return -1;
-        }
-        message.len += aes_gcm_finalize_message(message.buf + message.len
-                , tag_buf, sizeof(tag_buf));
+    if (!err)
+        err = aes_gcm_crypt_start(&crypt, iv, sizeof(iv), A, sizeof(A)
+                , wr_message, &encrypted_msg);
+    if (err) return -1;
+
+    encrypted_msg.len = aes_gcm_init_message(encrypted_msg.buf, iv, sizeof(iv));
+    err = aes_gcm_crypt_encrypt(&crypt
+            , test_data, sizeof(test_data));
+    if (err) {
+        fprintf(stderr, "aes_gcm_crypt_encrypt error: %d\n", err);
+        return -1;
     }
-    print_message(&message);
-    if (message.len != sizeof(iv) + sizeof(test_data) + sizeof(T)) {
+    err = aes_gcm_crypt_finish_encrypt(&crypt
+        , tag_buf, sizeof(tag_buf));
+    if (err) {
+        fprintf(stderr, "aes_gcm_crypt_finish_encrypt error: %d\n", err);
+        return -1;
+    }
+    encrypted_msg.len += aes_gcm_finalize_message(encrypted_msg.buf + encrypted_msg.len
+            , tag_buf, sizeof(tag_buf));
+
+    print_message(&encrypted_msg);
+    if (encrypted_msg.len != sizeof(iv) + sizeof(test_data) + sizeof(T)) {
         fprintf(stderr, "Message length incorrect!\n");
         return -1;
     }
-    if (memcmp(message.buf, iv, sizeof(iv))) {
+    if (memcmp(encrypted_msg.buf, iv, sizeof(iv))) {
         fprintf(stderr, "Message header incorrect!\n");
         return -1;
     }
-    if (memcmp(message.buf + sizeof(iv), cipher, sizeof(test_data))) {
+    if (memcmp(encrypted_msg.buf + sizeof(iv), cipher, sizeof(test_data))) {
         fprintf(stderr, "Message payload incorrect!\n");
         return -1;
     }
-    if (memcmp(message.buf + sizeof(iv) + sizeof(test_data)
+    if (memcmp(encrypted_msg.buf + sizeof(iv) + sizeof(test_data)
                 , T, sizeof(T))) {
         fprintf(stderr, "Message auth-tagincorrect!\n");
         return -1;
     }
     fprintf(stdout, "Message is correct\n");
     return err;
+}
+
+static int test_stream_crypt_dec()
+{
+    aes_gcm_stream_crypt_t crypt; 
+    int err;
+    size_t payload_len;
+
+    memset(&decrypted_msg, 0, sizeof(decrypted_msg));
+    payload_len = encrypted_msg.len - sizeof(iv) - sizeof(T);
+
+    err = aes_gcm_crypt_init(&crypt, key, sizeof(key));
+    if (!err)
+        err = aes_gcm_crypt_start(&crypt
+                , encrypted_msg.buf, sizeof(iv) , A, sizeof(A)
+                , wr_message, &decrypted_msg);
+    if (err) return -1;
+
+    for (size_t i = 0; i < payload_len; ++i)
+        aes_gcm_crypt_decrypt_putchar(&crypt, encrypted_msg.buf[sizeof(iv) + i]);
+    return 0;
 }
 
 int main()
@@ -253,6 +280,12 @@ int main()
     if (stream_encrypt()) return -1;
     if (stream_decrypt()) return -1;
 
-    if (test_stream_crypt()) return -1;
+    /* Use aes_gcm_stream_crypt
+     */
+
+    if (test_stream_crypt_enc()) return -1;
+    if (test_stream_crypt_dec()) return -1;
+
+    fprintf(stdout, "All tests passed\n");
     return 0;
 }

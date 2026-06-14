@@ -1,51 +1,64 @@
-#include <aes_gcm.h>
 #include <stdio.h>
 #include <string.h>
 #include "aes-gcm-stream-crypt.h"
 
-int aes_gcm_cryt_init(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_init(aes_gcm_stream_crypt_t *crypt
         , const uint8_t *key, size_t key_len)
 {
-    crypt->key = key;
-    crypt->key_len = key_len;
-    return 0;
+    crypt->err = -EscAesGcm_Init(&crypt->ctx, key_len * 8, key);
+    return crypt->err;
 }
 
-int aes_gcm_cryt_enc_data(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_start(aes_gcm_stream_crypt_t *crypt
         , const uint8_t *iv, size_t iv_len
         , const uint8_t *A, size_t aad_len
-        , uint8_t *chunk_buf, size_t chunk_buf_sz
-        , uint8_t *tag_buf, size_t tag_buf_sz
-        , const uint8_t *data, size_t data_len
         , wr_chunk_cb wr_cb, void *wr_cb_data)
 {
-    EscAesGcm_ContextT ctx;
-    size_t offs;
-    int err;
+    crypt->wr_cb = wr_cb;
+    crypt->wr_cb_data = wr_cb_data;
+    if (!crypt->err)
+        crypt->err = -EscAesGcm_startEncryptDecrypt(&crypt->ctx, iv, iv_len);
+    if (!crypt->err)
+        crypt->err = -EscAesGcm_AssociatedData_Update(&crypt->ctx, A, aad_len);
+    return crypt->err;
+}
 
-    err = EscAesGcm_Init(&ctx, crypt->key_len * 8, crypt->key);
-    if (!err)
-        err = EscAesGcm_startEncryptDecrypt(&ctx, iv, iv_len);
-    if (!err)
-        err = EscAesGcm_AssociatedData_Update(&ctx, A, aad_len);
+int aes_gcm_crypt_encrypt(aes_gcm_stream_crypt_t *crypt
+        , const uint8_t *data, size_t data_len)
+{
+    size_t offs;
+
+    if (crypt->err) return crypt->err;
 
     offs = 0;
-    while (!err && offs < data_len) {
+    while (!crypt->err && offs < data_len) {
         size_t len;
 
-        len = data_len - offs < chunk_buf_sz
-            ? data_len - offs : chunk_buf_sz;
-        err = EscAesGcm_Encrypt_Update(&ctx, data + offs
-                , chunk_buf, len);
-        if (!err && wr_cb)
-            wr_cb(chunk_buf, len, wr_cb_data);
+        len = data_len - offs < AES_GCM_CHUNK_SZ
+            ? data_len - offs : AES_GCM_CHUNK_SZ;
+        crypt->err = -EscAesGcm_Encrypt_Update(&crypt->ctx, data + offs
+                , crypt->chunk, len);
+        if (!crypt->err && crypt->wr_cb)
+            crypt->err = crypt->wr_cb(crypt->chunk, len, crypt->wr_cb_data);
         offs += len;
     }
-    if (!err)
-        err = EscAesGcm_Encrypt_Update(&ctx, Esc_NULL_PTR, Esc_NULL_PTR, 0U);
-    if (!err)
-        err = EscAesGcm_Encrypt_Finish(&ctx, tag_buf, tag_buf_sz);
-    return err;
+    return crypt->err;
+}
+
+int aes_gcm_crypt_finish_encrypt(aes_gcm_stream_crypt_t *crypt
+        , uint8_t *tag_buf, size_t tag_buf_sz)
+{
+    if (!crypt->err)
+        crypt->err = -EscAesGcm_Encrypt_Finish(&crypt->ctx, tag_buf, tag_buf_sz);
+    return crypt->err;
+}
+
+int aes_gcm_crypt_decrypt_putchar(aes_gcm_stream_crypt_t *crypt
+        , uint8_t c)
+{
+    (void)crypt;
+    (void)c;
+    return 0;
 }
 
 size_t aes_gcm_init_message(uint8_t *msg, const uint8_t *iv, size_t iv_len)
