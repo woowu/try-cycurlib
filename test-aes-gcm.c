@@ -7,7 +7,7 @@
 extern size_t memdump(unsigned char *buf, size_t size, const void *data, size_t len);
 
 typedef struct {
-    uint8_t buf[100];
+    uint8_t buf[4096];
     size_t len;
 } message_t;
 
@@ -167,8 +167,6 @@ static int stream_decrypt()
         offs += len;
     }
     if (!err)
-        err = EscAesGcm_Decrypt_Update(&ctx, Esc_NULL_PTR, Esc_NULL_PTR, 0U);
-    if (!err)
         err = EscAesGcm_Decrypt_Finish(&ctx, T, sizeof(T));
     if (err) {
         fprintf(stderr, "Stream decryption failed: %d\n", err);
@@ -230,6 +228,7 @@ static int test_stream_crypt_enc()
     encrypted_msg.len += aes_gcm_finalize_message(encrypted_msg.buf + encrypted_msg.len
             , tag_buf, sizeof(tag_buf));
 
+    fprintf(stdout, "Encrypted message:\n");
     print_message(&encrypted_msg);
     if (encrypted_msg.len != sizeof(iv) + sizeof(test_data) + sizeof(T)) {
         fprintf(stderr, "Message length incorrect!\n");
@@ -270,7 +269,16 @@ static int test_stream_crypt_dec()
 
     for (size_t i = 0; i < payload_len; ++i)
         aes_gcm_crypt_decrypt_putchar(&crypt, encrypted_msg.buf[sizeof(iv) + i]);
-    return 0;
+    err = aes_gcm_crypt_finish_decrypt(&crypt, T, sizeof(T));
+    if (err)
+        fprintf(stderr, "test_stream_crypt_dec() failed\n");
+    fprintf(stdout, "Decrypted message:\n");
+    print_message(&decrypted_msg);
+    if (err)
+        fprintf(stderr, "Message decrypting error!\n");
+    else if (memcmp(decrypted_msg.buf, test_data, sizeof(test_data)))
+        fprintf(stderr, "Contents of decrypted message mismatched!\n");
+    return err;
 }
 
 int main()

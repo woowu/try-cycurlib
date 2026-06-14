@@ -20,6 +20,10 @@ typedef struct {
     wr_chunk_cb wr_cb;
     void * wr_cb_data;
     int err;
+
+    /* Only for decryption
+     */
+    size_t n_chars;
 } aes_gcm_stream_crypt_t;
 
 #ifdef __cplusplus
@@ -41,7 +45,7 @@ int aes_gcm_crypt_encrypt(aes_gcm_stream_crypt_t *crypt
         , const uint8_t *data, size_t data_len);
 
 int aes_gcm_crypt_finish_encrypt(aes_gcm_stream_crypt_t *crypt
-        , uint8_t *tag_buf, size_t tag_buf_sz);
+        , uint8_t *T, size_t tag_len);
 
 /**
  * Send one byte from the encrypted data stream to the stream decryption
@@ -50,6 +54,9 @@ int aes_gcm_crypt_finish_encrypt(aes_gcm_stream_crypt_t *crypt
  */
 int aes_gcm_crypt_decrypt_putchar(aes_gcm_stream_crypt_t *crypt
         , uint8_t c);
+
+int aes_gcm_crypt_finish_decrypt(aes_gcm_stream_crypt_t *crypt
+        , const uint8_t *T, size_t tag_len);
 
 /**
  * Add IV as the header of an aes-gcm message.
