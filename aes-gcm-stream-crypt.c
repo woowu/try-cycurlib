@@ -99,6 +99,8 @@ int aes_gcm_crypt_finish_decrypt(aes_gcm_stream_crypt_t *crypt
     return crypt->err;
 }
 
+/*---------------------------------------------------------------------------*/
+
 size_t aes_gcm_init_message(uint8_t *msg, const uint8_t *iv, size_t iv_len)
 {
     memcpy(msg, iv, iv_len);

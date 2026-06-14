@@ -58,6 +58,8 @@ int aes_gcm_crypt_decrypt_putchar(aes_gcm_stream_crypt_t *crypt
 int aes_gcm_crypt_finish_decrypt(aes_gcm_stream_crypt_t *crypt
         , const uint8_t *T, size_t tag_len);
 
+/*---------------------------------------------------------------------------*/
+
 /**
  * Add IV as the header of an aes-gcm message.
  */
