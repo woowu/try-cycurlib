@@ -35,7 +35,6 @@ static const uint8_t A[] = {
     0x00U, 0x03U, 0xfaU, 0xceU, 0xdeU, 0xadU, 0xbeU, 0xefU,
     0xfeU, 0xedU,
 };
-static const size_t chunk_size = 16;
 
 static uint8_t cipher[sizeof(test_data)];
 static uint8_t T[12];
@@ -100,6 +99,7 @@ static int one_shot_decrypt()
 
 static int stream_encrypt()
 {
+    static const size_t chunk_size = 16;
     uint8_t stream_cipher[sizeof(test_data)];
     uint8_t stream_T[12];
     EscAesGcm_ContextT ctx;
@@ -143,6 +143,7 @@ static int stream_encrypt()
 
 static int stream_decrypt()
 {
+    static const size_t chunk_size = 16;
     uint8_t stream_plaintext[sizeof(test_data)];
     EscAesGcm_ContextT ctx;
     size_t offs;
@@ -186,9 +187,16 @@ static int wr_message(const uint8_t *chunk, size_t len, void *cb_data)
         fprintf(stderr, "Message size overflow\n");
         return -1;
     }
-    memcpy(message->buf, chunk, len);
+    memcpy(message->buf + message->len, chunk, len);
     message->len += len;
     return 0;
+}
+
+static void print_message(const message_t *message)
+{
+    memdump(hexstr, sizeof(hexstr), message->buf, message->len);
+    fprintf(stdout, "Message len %zu\n", message->len);
+    fprintf(stdout, "%s\n", hexstr);
 }
 
 static int test_stream_crypt()
@@ -202,7 +210,7 @@ static int test_stream_crypt()
     err = aes_gcm_cryt_init(&crypt
             , key, sizeof(key));
     if (!err) {
-        message.len = 0;
+        message.len = aes_gcm_init_message(message.buf, iv, sizeof(iv));
         err = aes_gcm_cryt_enc_data(&crypt, iv, sizeof(iv)
                 , A, sizeof(A)
                 , chunk_buf, sizeof(chunk_buf)
@@ -213,7 +221,28 @@ static int test_stream_crypt()
             fprintf(stderr, "write message error: %d\n", err);
             return -1;
         }
+        message.len += aes_gcm_finalize_message(message.buf + message.len
+                , tag_buf, sizeof(tag_buf));
     }
+    print_message(&message);
+    if (message.len != sizeof(iv) + sizeof(test_data) + sizeof(T)) {
+        fprintf(stderr, "Message length incorrect!\n");
+        return -1;
+    }
+    if (memcmp(message.buf, iv, sizeof(iv))) {
+        fprintf(stderr, "Message header incorrect!\n");
+        return -1;
+    }
+    if (memcmp(message.buf + sizeof(iv), cipher, sizeof(test_data))) {
+        fprintf(stderr, "Message payload incorrect!\n");
+        return -1;
+    }
+    if (memcmp(message.buf + sizeof(iv) + sizeof(test_data)
+                , T, sizeof(T))) {
+        fprintf(stderr, "Message auth-tagincorrect!\n");
+        return -1;
+    }
+    fprintf(stdout, "Message is correct\n");
     return err;
 }
 

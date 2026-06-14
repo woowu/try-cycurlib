@@ -15,11 +15,12 @@ typedef struct {
     size_t tag_sz;
 } aes_gcm_stream_crypt_t;
 
-typedef int (* wr_chunk_cb)(const uint8_t *chunk, size_t len, void *cb_data);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef int (* wr_chunk_cb)(const uint8_t *chunk, size_t len, void *cb_data);
 
 int aes_gcm_cryt_init(aes_gcm_stream_crypt_t *crypt
         , const uint8_t *key, size_t key_len);
@@ -36,6 +37,10 @@ int aes_gcm_cryt_enc_data(aes_gcm_stream_crypt_t *crypt
         , uint8_t *tag_buf, size_t tag_buf_sz
         , const uint8_t *data, size_t data_len
         , wr_chunk_cb wr_cb, void *wr_cb_data);
+
+size_t aes_gcm_init_message(uint8_t *msg, const uint8_t *iv, size_t iv_len);
+size_t aes_gcm_finalize_message(uint8_t *msg
+        , const uint8_t *T, size_t tag_len);
 
 #ifdef __cplusplus
 }

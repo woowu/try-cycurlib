@@ -1,5 +1,6 @@
 #include <aes_gcm.h>
 #include <stdio.h>
+#include <string.h>
 #include "aes-gcm-stream-crypt.h"
 
 int aes_gcm_cryt_init(aes_gcm_stream_crypt_t *crypt
@@ -29,20 +30,33 @@ int aes_gcm_cryt_enc_data(aes_gcm_stream_crypt_t *crypt
         err = EscAesGcm_AssociatedData_Update(&ctx, A, aad_len);
 
     offs = 0;
-    while (!err && offs < sizeof(data_len)) {
+    while (!err && offs < data_len) {
         size_t len;
 
         len = data_len - offs < chunk_buf_sz
             ? data_len - offs : chunk_buf_sz;
         err = EscAesGcm_Encrypt_Update(&ctx, data + offs
                 , chunk_buf, len);
+        if (!err && wr_cb)
+            wr_cb(chunk_buf, len, wr_cb_data);
         offs += len;
     }
     if (!err)
         err = EscAesGcm_Encrypt_Update(&ctx, Esc_NULL_PTR, Esc_NULL_PTR, 0U);
     if (!err)
         err = EscAesGcm_Encrypt_Finish(&ctx, tag_buf, tag_buf_sz);
-    (void)wr_cb;
-    (void)wr_cb_data;
     return err;
+}
+
+size_t aes_gcm_init_message(uint8_t *msg, const uint8_t *iv, size_t iv_len)
+{
+    memcpy(msg, iv, iv_len);
+    return iv_len;
+}
+
+size_t aes_gcm_finalize_message(uint8_t *msg
+        , const uint8_t *T, size_t tag_len)
+{
+    memcpy(msg, T, tag_len);
+    return tag_len;
 }
