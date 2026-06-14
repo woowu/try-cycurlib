@@ -7,16 +7,16 @@ CFLAGS = -O0 -g
 
 .PHONY: all clean
 
-all: aes-gcm-stream-codec
+all: test-aes-gcm
 
 %.o : %.c
 	$(CC) $(CPPFLAGS) -c $< -o $@
 
-aes-gcm-stream-codec: aes-gcm-stream-codec.o memdump.o
+test-aes-gcm: test-aes-gcm.o aes-gcm-stream-crypt.o memdump.o
 	$(CC) $^ \
 		$(CYCURLIB)/lib/bin/libcycurlib.a \
 		$(CYCURLIB)/tests/bin/libcycurlibtest.a \
 		-o $@
 
 clean:
-	@rm -rf aes-gcm-stream-codec *.o *~
+	@rm -rf test-aes-gcm *.o *~

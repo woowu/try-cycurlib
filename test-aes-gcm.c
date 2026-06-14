@@ -1,9 +1,15 @@
 #include <stdio.h>
 #include <string.h>
-#include "aes_gcm.h"
-#include "test_aes_gcm.h"
+#include <aes_gcm.h>
+#include <test_aes_gcm.h>
+#include "aes-gcm-stream-crypt.h"
 
 extern size_t memdump(unsigned char *buf, size_t size, const void *data, size_t len);
+
+typedef struct {
+    uint8_t buf[100];
+    size_t len;
+} message_t;
 
 static const uint8_t test_data[] = {
     0xd9U, 0x31U, 0x32U, 0x25U, 0xf8U, 0x84U, 0x06U, 0xe5U,
@@ -173,11 +179,51 @@ static int stream_decrypt()
     return 0;
 }
 
+static int wr_message(const uint8_t *chunk, size_t len, void *cb_data)
+{
+    message_t *message = (message_t*)cb_data;
+    if (message->len + len > sizeof(message->buf)) {
+        fprintf(stderr, "Message size overflow\n");
+        return -1;
+    }
+    memcpy(message->buf, chunk, len);
+    message->len += len;
+    return 0;
+}
+
+static int test_stream_crypt()
+{
+    aes_gcm_stream_crypt_t crypt; 
+    message_t message;
+    int err;
+    uint8_t chunk_buf[16];
+    uint8_t tag_buf[12];
+
+    err = aes_gcm_cryt_init(&crypt
+            , key, sizeof(key));
+    if (!err) {
+        message.len = 0;
+        err = aes_gcm_cryt_enc_data(&crypt, iv, sizeof(iv)
+                , A, sizeof(A)
+                , chunk_buf, sizeof(chunk_buf)
+                , tag_buf, sizeof(tag_buf)
+                , test_data, sizeof(test_data)
+                , wr_message, &message);
+        if (err) {
+            fprintf(stderr, "write message error: %d\n", err);
+            return -1;
+        }
+    }
+    return err;
+}
+
 int main()
 {
     if (one_shot_encrypt()) return -1;
     if (one_shot_decrypt()) return -1;
     if (stream_encrypt()) return -1;
     if (stream_decrypt()) return -1;
+
+    if (test_stream_crypt()) return -1;
     return 0;
 }

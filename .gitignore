@@ -3,4 +3,4 @@
 *.d
 *.swp
 tags
-aes-gcm-stream-codec
+test-aes-gcm
