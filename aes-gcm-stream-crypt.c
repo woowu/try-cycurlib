@@ -15,7 +15,7 @@ static void aes_gcm_crypt_decrypt_chunk(aes_gcm_stream_crypt_t *crypt
             ? -100 : 0;
 }
 
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 
 int aes_gcm_crypt_init(aes_gcm_stream_crypt_t *crypt
         , const uint8_t *key, size_t key_len)
@@ -99,7 +99,7 @@ int aes_gcm_crypt_finish_decrypt(aes_gcm_stream_crypt_t *crypt
     return crypt->err;
 }
 
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 
 size_t aes_gcm_init_message(uint8_t *msg, const uint8_t *iv, size_t iv_len)
 {
