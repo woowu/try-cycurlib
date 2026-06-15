@@ -201,7 +201,7 @@ static void print_message(const message_t *message)
 
 static int test_stream_crypt_enc()
 {
-    aes_gcm_stream_crypt_t crypt; 
+    aes_gcm_crypt_t crypt; 
     int err;
     uint8_t tag_buf[12];
 
@@ -253,7 +253,7 @@ static int test_stream_crypt_enc()
 
 static int test_stream_crypt_dec()
 {
-    aes_gcm_stream_crypt_t crypt; 
+    aes_gcm_crypt_t crypt; 
     int err;
     size_t payload_len;
 

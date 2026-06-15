@@ -1,3 +1,12 @@
+/** \copyright                (C) Copyright Landis + Gyr, 2026-2027
+ * This source code and any compilation or derivative thereof is protected by intellectual
+ * property rights (in particular copyright) and is the proprietary information of Landis+Gyr
+ * and is confidential in nature.
+ * Under no circumstances shall the content be copied, disseminated, amended or made accessible
+ * (in whole or in part) to third parties nor used in any other way without the prior written
+ * consent of Landis+Gyr.
+ */
+
 #ifndef __AES_GCM_STREAM_CRYPT_HPP
 #define __AES_GCM_STREAM_CRYPT_HPP
 #include <stdint.h>
@@ -24,15 +33,15 @@ typedef struct {
     /* Only for decryption
      */
     size_t n_chars;
-} aes_gcm_stream_crypt_t;
+} aes_gcm_crypt_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int aes_gcm_crypt_init(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_init(aes_gcm_crypt_t *crypt
         , const uint8_t *key, size_t key_len);
-int aes_gcm_crypt_start(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_start(aes_gcm_crypt_t *crypt
         , const uint8_t *iv, size_t iv_len
         , const uint8_t *A, size_t aad_len
         , wr_chunk_cb wr_cb, void *wr_cb_data);
@@ -41,10 +50,10 @@ int aes_gcm_crypt_start(aes_gcm_stream_crypt_t *crypt
  * Encrypt data by sending split chunks to the cipher. Each
  * decrypted chunk is sent to the wr_cb.
  */
-int aes_gcm_crypt_encrypt(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_encrypt(aes_gcm_crypt_t *crypt
         , const uint8_t *data, size_t data_len);
 
-int aes_gcm_crypt_finish_encrypt(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_finish_encrypt(aes_gcm_crypt_t *crypt
         , uint8_t *T, size_t tag_len);
 
 /**
@@ -52,10 +61,10 @@ int aes_gcm_crypt_finish_encrypt(aes_gcm_stream_crypt_t *crypt
  * function. It, internally, may call the wr_cb to give decrypted chunk if
  * the size of accumulated cipher reaches the chunk size.
  */
-int aes_gcm_crypt_decrypt_putchar(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_decrypt_putchar(aes_gcm_crypt_t *crypt
         , uint8_t c);
 
-int aes_gcm_crypt_finish_decrypt(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_finish_decrypt(aes_gcm_crypt_t *crypt
         , const uint8_t *T, size_t tag_len);
 
 /*----------------------------------------------------------------------------*/

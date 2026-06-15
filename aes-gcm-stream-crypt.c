@@ -1,8 +1,17 @@
+/** \copyright                (C) Copyright Landis + Gyr, 2026-2027
+ * This source code and any compilation or derivative thereof is protected by intellectual
+ * property rights (in particular copyright) and is the proprietary information of Landis+Gyr
+ * and is confidential in nature.
+ * Under no circumstances shall the content be copied, disseminated, amended or made accessible
+ * (in whole or in part) to third parties nor used in any other way without the prior written
+ * consent of Landis+Gyr.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include "aes-gcm-stream-crypt.h"
 
-static void aes_gcm_crypt_decrypt_chunk(aes_gcm_stream_crypt_t *crypt
+static void aes_gcm_crypt_decrypt_chunk(aes_gcm_crypt_t *crypt
         , size_t n)
 {
     uint8_t plain_chunk[AES_GCM_CHUNK_SZ];
@@ -17,7 +26,7 @@ static void aes_gcm_crypt_decrypt_chunk(aes_gcm_stream_crypt_t *crypt
 
 /*----------------------------------------------------------------------------*/
 
-int aes_gcm_crypt_init(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_init(aes_gcm_crypt_t *crypt
         , const uint8_t *key, size_t key_len)
 {
     memset(crypt, 0, sizeof(*crypt));
@@ -25,7 +34,7 @@ int aes_gcm_crypt_init(aes_gcm_stream_crypt_t *crypt
     return crypt->err;
 }
 
-int aes_gcm_crypt_start(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_start(aes_gcm_crypt_t *crypt
         , const uint8_t *iv, size_t iv_len
         , const uint8_t *A, size_t aad_len
         , wr_chunk_cb wr_cb, void *wr_cb_data)
@@ -42,7 +51,7 @@ int aes_gcm_crypt_start(aes_gcm_stream_crypt_t *crypt
     return crypt->err;
 }
 
-int aes_gcm_crypt_encrypt(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_encrypt(aes_gcm_crypt_t *crypt
         , const uint8_t *data, size_t data_len)
 {
     size_t offs;
@@ -65,7 +74,7 @@ int aes_gcm_crypt_encrypt(aes_gcm_stream_crypt_t *crypt
     return crypt->err;
 }
 
-int aes_gcm_crypt_finish_encrypt(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_finish_encrypt(aes_gcm_crypt_t *crypt
         , uint8_t *T, size_t tag_len)
 {
     if (!crypt->err)
@@ -73,7 +82,7 @@ int aes_gcm_crypt_finish_encrypt(aes_gcm_stream_crypt_t *crypt
     return crypt->err;
 }
 
-int aes_gcm_crypt_decrypt_putchar(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_decrypt_putchar(aes_gcm_crypt_t *crypt
         , uint8_t c)
 {
     if (crypt->err) return crypt->err;
@@ -86,7 +95,7 @@ int aes_gcm_crypt_decrypt_putchar(aes_gcm_stream_crypt_t *crypt
     return crypt->err;
 }
 
-int aes_gcm_crypt_finish_decrypt(aes_gcm_stream_crypt_t *crypt
+int aes_gcm_crypt_finish_decrypt(aes_gcm_crypt_t *crypt
         , const uint8_t *T, size_t tag_len)
 {
     if (crypt->err) return crypt->err;
