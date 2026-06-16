@@ -16,7 +16,7 @@ static void aes_gcm_crypt_decrypt_chunk(aes_gcm_crypt_t *crypt
     uint8_t plain_chunk[AES_GCM_CHUNK_SZ];
 
     if (!crypt->err)
-        crypt->err = EscAesGcm_Decrypt_Update(&crypt->ctx, plain_chunk
+        crypt->err = -EscAesGcm_Decrypt_Update(&crypt->ctx, plain_chunk
                 , crypt->chunk, n);
     if (!crypt->err && crypt->wr_cb)
         crypt->err = crypt->wr_cb(plain_chunk, n, crypt->wr_cb_data)
@@ -29,8 +29,9 @@ int aes_gcm_crypt_init(aes_gcm_crypt_t *crypt
         , const uint8_t *key, size_t key_len)
 {
     memset(crypt, 0, sizeof(*crypt));
-    crypt->err = -EscAesGcm_Init(&crypt->ctx, key_len * 8, key);
-    return crypt->err;
+    crypt->key = key;
+    crypt->key_len = key_len;
+    return 0;
 }
 
 int aes_gcm_crypt_start(aes_gcm_crypt_t *crypt
@@ -43,6 +44,7 @@ int aes_gcm_crypt_start(aes_gcm_crypt_t *crypt
     crypt->n_chars = 0;
     memset(crypt->chunk, 0, sizeof(crypt->chunk));
 
+    crypt->err = -EscAesGcm_Init(&crypt->ctx, crypt->key_len * 8, crypt->key);
     if (!crypt->err)
         crypt->err = -EscAesGcm_startEncryptDecrypt(&crypt->ctx, iv, iv_len);
     if (!crypt->err)
@@ -102,7 +104,7 @@ int aes_gcm_crypt_finish_decrypt(aes_gcm_crypt_t *crypt
         aes_gcm_crypt_decrypt_chunk(crypt, crypt->n_chars);
     if (!crypt->err) {
         crypt->n_chars = 0;
-        crypt->err = EscAesGcm_Decrypt_Finish(&crypt->ctx, T, tag_len);
+        crypt->err = -EscAesGcm_Decrypt_Finish(&crypt->ctx, T, tag_len);
     }
     return crypt->err;
 }

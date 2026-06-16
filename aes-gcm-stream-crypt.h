@@ -25,6 +25,8 @@ typedef int (* wr_chunk_cb)(const uint8_t *chunk, size_t len, void *cb_data);
 
 typedef struct {
     EscAesGcm_ContextT ctx;
+    const uint8_t *key;
+    size_t key_len;
     uint8_t chunk[AES_GCM_CHUNK_SZ];
     wr_chunk_cb wr_cb;
     void * wr_cb_data;
