@@ -20,8 +20,15 @@
 #define AES_GCM_CHUNK_SZ 16
 
 /* Callback for writing a encrypted or decrypted chunk.
+ * @param chunk The chunk of encrypted cipher or decrypted plaintext
+ * @param len Lenth of the chunk
+ * @param offs The offs at which the encrypted/decrypted chunk should be written
+ *  in the caller's buffer.
+ * @param cb_data The original caller data
+ * @return 0 if succeeds or negative if fails.
  */
-typedef int (* wr_chunk_cb)(const uint8_t *chunk, size_t len, void *cb_data);
+typedef int (* wr_chunk_cb)(const uint8_t *chunk, size_t len, size_t offs
+        , void *cb_data);
 
 typedef struct {
     EscAesGcm_ContextT ctx;
@@ -35,6 +42,7 @@ typedef struct {
     /* Only for decryption
      */
     size_t n_chars;
+    size_t offset; /* Position of the next octet in the cipher stream */
 } aes_gcm_crypt_t;
 
 #ifdef __cplusplus
