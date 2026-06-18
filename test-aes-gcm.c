@@ -181,9 +181,11 @@ static int stream_decrypt()
 }
 
 static int wr_message(const uint8_t *chunk, size_t len, size_t offs
-        , void *cb_data)
+        , const uint8_t *source_data, void *cb_data)
 {
     (void)offs;
+    (void)source_data;
+
     message_t *message = (message_t*)cb_data;
     if (message->len + len > sizeof(message->buf)) {
         fprintf(stderr, "Message size overflow\n");

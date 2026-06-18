@@ -15,26 +15,14 @@ static void aes_gcm_crypt_decrypt_chunk(aes_gcm_crypt_t *crypt
         , size_t n)
 {
     uint8_t plain_chunk[AES_GCM_CHUNK_SZ];
-#if 0
-    char hexstr[AES_GCM_CHUNK_SZ * 4];
-#endif
 
     if (!crypt->err)
         crypt->err = -EscAesGcm_Decrypt_Update(&crypt->ctx, plain_chunk
                 , crypt->chunk, n);
 
-#if 0
-    hexdump(hexstr, sizeof(hexstr), crypt->chunk, n);
-    fprintf(stdout, "aes_gcm decrypts chunk. Cipher is\n");
-    fprintf(stdout, "%s\n", hexstr);
-    hexdump(hexstr, sizeof(hexstr), plain_chunk, n);
-    fprintf(stdout, ", plaintext is\n");
-    fprintf(stdout, "%s\n", hexstr);
-#endif
-
     if (!crypt->err && crypt->wr_cb)
         crypt->err = crypt->wr_cb(plain_chunk, n, crypt->offset - n
-                , crypt->wr_cb_data) ? -100 : 0;
+                , crypt->chunk, crypt->wr_cb_data) ? -100 : 0;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -82,7 +70,8 @@ int aes_gcm_crypt_encrypt(aes_gcm_crypt_t *crypt
         crypt->err = -EscAesGcm_Encrypt_Update(&crypt->ctx, data + offs
                 , crypt->chunk, len);
         if (!crypt->err && crypt->wr_cb)
-            crypt->err = crypt->wr_cb(crypt->chunk, len, offs, crypt->wr_cb_data)
+            crypt->err = crypt->wr_cb(crypt->chunk, len, offs
+                    , data + offs, crypt->wr_cb_data)
                 ? -100 : 0;
         offs += len;
     }
